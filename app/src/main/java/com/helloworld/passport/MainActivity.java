@@ -1,6 +1,7 @@
 package com.helloworld.passport;
 
 import android.os.Bundle;
+import android.view.View;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -27,7 +28,14 @@ public class MainActivity extends AppCompatActivity {
         CredAdapter adapter = new CredAdapter(Vids);
         rvVids.setAdapter(adapter);
 
+        ClickAdapter clickAdapter = new ClickAdapter(Vids);
+        clickAdapter.setOnEntryClickListener(new ClickAdapter.OnEntryClickListener() {
+            @Override
+            public void onEntryClick(View view, int position) {
 
+            }
+        });
+        rvVids.setAdapter(clickAdapter);
     }
 
 }
