@@ -1,24 +1,33 @@
 package com.helloworld.passport;
 
-import android.app.Activity;
 import android.os.Bundle;
-import android.widget.ArrayAdapter;
-import android.widget.ListView;
 
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-public class MainActivity extends Activity {
-    // Array of strings...
-    String[] mobileArray = {"SSN", "License Info", "Voting Credentials", "Insurance Card"};
+import java.util.ArrayList;
+import java.util.HashMap;
+
+public class MainActivity extends AppCompatActivity {
+
+    public ArrayList<HashMap<String, String>> Vids;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        ArrayAdapter adapter = new ArrayAdapter<String>(this,
-                R.layout.activity_listview, mobileArray);
+        RecyclerView rvVids = findViewById(R.id.rvVids);
 
-        ListView listView = (ListView) findViewById(R.id.mobile_list);
-        listView.setAdapter(adapter);
+        rvVids.setLayoutManager(new LinearLayoutManager(this));
+
+        Vids = Credentials.createCredentialList(15);
+
+        CredAdapter adapter = new CredAdapter(Vids);
+        rvVids.setAdapter(adapter);
+
+
     }
+
 }
