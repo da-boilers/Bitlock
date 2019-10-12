@@ -58,6 +58,6 @@ public class Passport {
     }
 
     public ArrayList<Identity> getVIDs() {
-        return null;
+        return VIDs;
     }
 }

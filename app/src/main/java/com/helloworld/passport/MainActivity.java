@@ -75,7 +75,7 @@ public class MainActivity extends AppCompatActivity {
         PublicKey rdmKey;
 
         try {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("ECDSA");
             SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
             ECGenParameterSpec ecSpec = new ECGenParameterSpec("prime192v1");
             keyGen.initialize(ecSpec, random);
