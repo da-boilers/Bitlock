@@ -9,6 +9,7 @@ import java.security.Key;
 import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.util.ArrayList;
 import java.util.Base64;
 
 public class StringUtil {
@@ -29,6 +30,14 @@ public class StringUtil {
         catch(Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    public static String toString(ArrayList<Identity> VIDs) {
+        String data = "";
+        for(Identity id: VIDs) {
+            data += id.data;
+        }
+        return data;
     }
 
     public static byte[] serializeArrayList(Object obj) throws IOException {
