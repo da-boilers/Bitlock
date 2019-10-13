@@ -2,11 +2,9 @@ package com.helloworld.passport;
 
 import android.os.Bundle;
 import android.view.MenuItem;
-
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
-
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.firebase.firestore.DocumentReference;
@@ -14,11 +12,9 @@ import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.helloworld.passport.util.Block;
 import com.helloworld.passport.util.Identity;
-
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.HashMap;
-
 import static com.helloworld.passport.R.id;
 import static com.helloworld.passport.R.layout;
 
