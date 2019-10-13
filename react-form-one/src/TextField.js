@@ -32,14 +32,25 @@ export default function TextFields() {
     setValues({ ...values, [name]: event.target.value });
   };
 
+  var firstName = "";
+
+  const handleOnChange = event => {
+          firstName = event.textField;
+  };
+
+
+
   return (
     <form className={classes.container} noValidate autoComplete="off">
       <TextField
         id="standard-dense"
         textAlign={'center'}
         label="First Name"
+        name="firstName"
         className={clsx(classes.textField, classes.dense)}
         margin="dense"
+        onChange={handleOnChange}
+        
       />
       <br />
       <TextField

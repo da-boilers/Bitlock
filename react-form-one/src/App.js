@@ -34,6 +34,8 @@ class App extends Component{
   };
   
   render() {
+
+      console.log(document.getElementsByName("firstName"));
   
       return (
         <div className="App">
