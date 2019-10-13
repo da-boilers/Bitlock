@@ -16,6 +16,10 @@ public class CredAdapter extends
         RecyclerView.Adapter<CredAdapter.ViewHolder> {
 
 
+    public HashMap<String, String> getCred(int position){
+        return this.mVids.get(position);
+    }
+
     public class ViewHolder extends RecyclerView.ViewHolder {
 
         TextView text1, text2;

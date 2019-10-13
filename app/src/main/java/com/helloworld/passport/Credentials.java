@@ -15,6 +15,7 @@ public class Credentials {
         //ArrayList<HashMap<String, String>> Vids = new ArrayList<>();
 
         ArrayList<HashMap<String, String>> credentials = new ArrayList<>();
+        double rand = Math.random();
 
         int counter = 0;
         for(int i = 0; i < numCreds; i++) {
@@ -22,6 +23,7 @@ public class Credentials {
             hash.put("IDTYPE", "Type" + counter);
             hash.put("Name", "Jack" + counter);
             hash.put("CPM", "1000" + counter);
+            hash.put("Membership", " " + rand);
             credentials.add(hash);
             counter++;
         }
