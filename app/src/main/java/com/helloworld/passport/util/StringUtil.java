@@ -1,14 +1,13 @@
 package com.helloworld.passport.util;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import android.util.Log;
 import java.security.Key;
+import java.security.*;
 import java.security.MessageDigest;
 import java.security.PublicKey;
 import java.security.Signature;
+import java.security.spec.EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
 
@@ -40,19 +39,6 @@ public class StringUtil {
         return data;
     }
 
-    public static byte[] serializeArrayList(Object obj) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        ObjectOutputStream os = new ObjectOutputStream(out);
-        os.writeObject(obj);
-        return out.toByteArray();
-    }
-
-    public static Object deserializeArrayList(byte[] data) throws IOException,   ClassNotFoundException {
-        ByteArrayInputStream in = new ByteArrayInputStream(data);
-        ObjectInputStream is = new ObjectInputStream(in);
-        return is.readObject();
-    }
-
     public static boolean verifyECDSASig(PublicKey publicKey, String data, byte[] signature){
         try {
             Signature ecdsaVerify = Signature.getInstance("ECDSA", "BC");
@@ -67,5 +53,17 @@ public class StringUtil {
 
     public static String getStringFromKey(Key key) {
         return Base64.getEncoder().encodeToString(key.getEncoded());
+    }
+
+    public static PublicKey getPublicKeyFromString(String key) {
+        try {
+            Log.e("StringUtil", "String is " + key);
+            Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
+            EncodedKeySpec publicKeySpec = new X509EncodedKeySpec(Base64.getDecoder().decode(key));
+            KeyFactory keyFactory = KeyFactory.getInstance("ECDSA");
+            return keyFactory.generatePublic(publicKeySpec);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }

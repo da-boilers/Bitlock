@@ -7,8 +7,15 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.helloworld.passport.util.Block;
+import com.helloworld.passport.util.Identity;
 
+import java.security.Security;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -16,41 +23,69 @@ import static com.helloworld.passport.R.id;
 import static com.helloworld.passport.R.layout;
 
 public class MainActivity extends AppCompatActivity {
+    // Access a Cloud Firestore instance from your Activity
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+    private ArrayList<Block> currentBlockChain = new ArrayList<Block>();
+    private Passport passport = new Passport(currentBlockChain);
 
-
-    public ArrayList<HashMap<String, String>> Vids;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
         setContentView(layout.activity_main);
+
+        Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
 
         BottomNavigationView bottomNav = findViewById(R.id.bottom_navigation);
         bottomNav.setOnNavigationItemSelectedListener(navListener);
 
-//        RecyclerView rvVids = findViewById(id.rvVids);
-//
-//        rvVids.setLayoutManager(new LinearLayoutManager(this));
-//
-//        Vids = Credentials.createCredentialList(15);
-//
-//        final CredAdapter adapter = new CredAdapter(Vids);
-//        rvVids.setAdapter(adapter);
-//
-//        ClickAdapter clickAdapter = new ClickAdapter(Vids);
-//        clickAdapter.setOnEntryClickListener(new ClickAdapter.OnEntryClickListener() {
-//            @Override
-//            public void onEntryClick(View view, int position) {
-//                HashMap hash = adapter.getCred(position);
-//
-//                onButtonShowPopupWindowClick(view, hash);
-//            }
-//        });
-//        rvVids.setAdapter(clickAdapter);
-        getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
-                new HomeFragment()).commit();
+        if (savedInstanceState == null) {
+            getSupportFragmentManager().beginTransaction().replace(R.id.fragment_container,
+                    new HomeFragment()).commit();
+        }
     }
 
+    public void completeIdentification(Block block) {
+        db.collection("BLOCKCHAIN").document(Integer.toString(block.num)).set(block);
+    }
+
+    public void updateData() {
+        DocumentReference docRef = db.collection("BLOCKCHAIN").document("TEST");
+        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                Block block = documentSnapshot.toObject(Block.class);
+                currentBlockChain.add(block);
+                System.out.println(isChainValid(currentBlockChain));
+                System.out.println(currentBlockChain.get(0).hash);
+            }
+        });
+
+    }
+
+    public boolean isChainValid(ArrayList<Block> blockChain) {
+        Block currentBlock;
+        Block lastBlock;
+
+        for(int i=1; i < blockChain.size(); i++) {
+            currentBlock = blockChain.get(i);
+            lastBlock = blockChain.get(i-1);
+
+            if(!currentBlock.hash.equals(currentBlock.calculateHash())) {
+                return false;
+            }
+
+            if(!currentBlock.previousHash.equals(blockChain.get(blockChain.size()-1).hash)) {
+                return false;
+            }
+
+            for(Identity VID: currentBlock.vids) {
+                if(!VID.verifySignature()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
 
     private BottomNavigationView.OnNavigationItemSelectedListener navListener =
             new BottomNavigationView.OnNavigationItemSelectedListener() {
@@ -74,38 +109,4 @@ public class MainActivity extends AppCompatActivity {
                     return true;
                 }
             };
-
-//    public void onButtonShowPopupWindowClick(View view, HashMap hashMap) {
-//
-//
-////        String toDisplay = hashMap.get("IDTYPE").toString() + "\n" + hashMap.get("Name").toString() + "\n" + hashMap.get("CPM").toString() + "\n" + hashMap.get("Membership").toString();
-////        // inflate the layout of the popup window
-////        LayoutInflater inflater = (LayoutInflater)
-////                getSystemService(LAYOUT_INFLATER_SERVICE);
-////        View popupView = inflater.inflate(layout.popup_window, null);
-////
-////        boolean focusable = true; // lets taps outside the popup also dismiss it
-////        final PopupWindow popupWindow = new PopupWindow(popupView, 820, 1200, focusable);
-////
-////        popupView.setBackground(new ColorDrawable(Color.GRAY));
-////
-////        TextView textout = popupView.findViewById(R.id.textout);
-////
-////        textout.setText(toDisplay);
-////
-////        // show the popup window
-////        // which view you pass in doesn't matter, it is only used for the window tolken
-////        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
-////
-////        // dismiss the popup window when touched
-////        popupView.setOnTouchListener(new View.OnTouchListener() {
-////            @Override
-////            public boolean onTouch(View v, MotionEvent event) {
-////                popupWindow.dismiss();
-////                return true;
-////            }
-////        });
-//    }
-
-
 }
