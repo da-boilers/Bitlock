@@ -2,84 +2,73 @@ package com.helloworld.passport;
 
 import android.os.Bundle;
 
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.google.android.material.snackbar.Snackbar;
 
-import android.os.TransactionTooLargeException;
+import android.util.Log;
 import android.view.View;
 
+import androidx.annotation.NonNull;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
-
 import com.google.android.material.navigation.NavigationView;
+import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.QueryDocumentSnapshot;
+import com.google.firebase.firestore.QuerySnapshot;
+import com.google.firebase.firestore.SetOptions;
 import com.helloworld.passport.util.Block;
-import com.helloworld.passport.util.DataParserTest;
 import com.helloworld.passport.util.Identity;
+import com.helloworld.passport.util.StringUtil;
+
 import java.security.spec.ECGenParameterSpec;
 import java.security.*;
 import androidx.drawerlayout.widget.DrawerLayout;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
-
 import android.view.Menu;
-import android.net.wifi.WifiManager;
-
-import android.content.BroadcastReceiver;
-import android.content.Context;
-import android.content.IntentFilter;
-import android.net.wifi.WifiManager;
-import android.net.wifi.p2p.WifiP2pConfig;
-import android.net.wifi.p2p.WifiP2pDevice;
-import android.net.wifi.p2p.WifiP2pDeviceList;
-import android.net.wifi.p2p.WifiP2pInfo;
-import android.net.wifi.p2p.WifiP2pManager;
-import android.os.Handler;
-import android.os.Message;
-import android.os.Bundle;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.InetAddress;
-import java.net.InetSocketAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.util.ArrayList;
-import java.util.List;
-
-import java.lang.reflect.Array;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.PublicKey;
 import java.security.SecureRandom;
-import java.security.spec.ECGenParameterSpec;
-import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import io.opencensus.tags.Tag;
 
 public class MainActivity extends AppCompatActivity {
+    // Access a Cloud Firestore instance from your Activity
+    FirebaseFirestore db = FirebaseFirestore.getInstance();
+
 
     private AppBarConfiguration mAppBarConfiguration;
 
-    private ArrayList<Block> currentBlockchain = new ArrayList<Block>();
-    WifiManager wifiManager = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+    private Button discoverPeersBtn;
+    private Button enableWifi;
+    private TextView connectionStatus;
+    private ListView listView;
+
+    //private BlockChain currentBlockChain = new BlockChain(new ArrayList<Block>());
+    private ArrayList<Block> currentBlockChain = new ArrayList<Block>();
+    private Passport passport = new Passport(currentBlockChain);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        System.out.println("********************************"+wifiManager.isWifiEnabled());
-
-
         setContentView(R.layout.activity_main);
+
         Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -103,10 +92,55 @@ public class MainActivity extends AppCompatActivity {
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment);
         NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
         NavigationUI.setupWithNavController(navigationView, navController);
+        BlockChainTest();
+        updateData();
+    }
 
-        DataParserTest.runTest();
+    public void completeIdentification(Block block) {
+        db.collection("BLOCKCHAIN").document(Integer.toString(block.num)).set(block);
+    }
 
-        Passport passport = new Passport(currentBlockchain);
+    public void updateData() {
+        DocumentReference docRef = db.collection("BLOCKCHAIN").document("TEST");
+        docRef.get().addOnSuccessListener(new OnSuccessListener<DocumentSnapshot>() {
+            @Override
+            public void onSuccess(DocumentSnapshot documentSnapshot) {
+                Block block = documentSnapshot.toObject(Block.class);
+                currentBlockChain.add(block);
+                System.out.println(isChainValid(currentBlockChain));
+                System.out.println(currentBlockChain.get(0).hash);
+            }
+        });
+
+    }
+
+    public boolean isChainValid(ArrayList<Block> blockChain) {
+        Block currentBlock;
+        Block lastBlock;
+
+        for(int i=1; i < blockChain.size(); i++) {
+            currentBlock = blockChain.get(i);
+            lastBlock = blockChain.get(i-1);
+
+            if(!currentBlock.hash.equals(currentBlock.calculateHash())) {
+                return false;
+            }
+
+            if(!currentBlock.previousHash.equals(blockChain.get(blockChain.size()-1).hash)) {
+                return false;
+            }
+
+            for(Identity VID: currentBlock.vids) {
+                if(!VID.verifySignature()) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    public void BlockChainTest() {
+        //Passport passport = new Passport(blockChain.blockList);
         PublicKey orgKey;
         PublicKey rdmKey;
 
@@ -122,7 +156,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         try {
-            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("EC");
+            KeyPairGenerator keyGen = KeyPairGenerator.getInstance("ECDSA");
             SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
             ECGenParameterSpec ecSpec = new ECGenParameterSpec("prime192v1");
             keyGen.initialize(ecSpec, random);
@@ -133,22 +167,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         byte[] sig = {};
-        ArrayList<Identity> idList = new ArrayList<Identity>();
-        idList.add(new Identity(orgKey, passport.publicKey, sig, "data"));
-        passport.addNewId(new Identity(orgKey, passport.publicKey, sig, "data"));
-        idList.add(new Identity(orgKey, rdmKey, sig, "data"));
+        Block block1 = new Block(new ArrayList<Identity>(), "0", 0);
+        block1.addIdentity(new Identity(orgKey, passport.publicKey, sig, "data"));
+        block1.addIdentity(new Identity(orgKey, rdmKey, sig, "data"));
 
-        currentBlockchain.add(new Block(idList, "0"));
+        completeIdentification(block1);
 
-        idList.add(new Identity(orgKey, passport.publicKey, sig, "data 2"));
-        passport.addNewId(new Identity(orgKey, passport.publicKey, sig, "data 2"));
-        idList.add(new Identity(orgKey, passport.publicKey, sig, "data 3"));
-        passport.addNewId(new Identity(orgKey, passport.publicKey, sig, "data 3"));
+        Block block2 = new Block(new ArrayList<Identity>(), block1.hash, block1.num+1);
+        block1.addIdentity(new Identity(orgKey, passport.publicKey, sig, "data"));
+        block1.addIdentity(new Identity(orgKey, rdmKey, sig, "data"));
 
-        currentBlockchain.add(new Block(idList, currentBlockchain.get(0).hash));
-
-        passport.updateBlockChain(currentBlockchain);
-        passport.printAllVIDs();
+        completeIdentification(block2);
     }
 
     @Override
@@ -164,10 +193,4 @@ public class MainActivity extends AppCompatActivity {
         return NavigationUI.navigateUp(navController, mAppBarConfiguration)
                 || super.onSupportNavigateUp();
     }
-
-
-
-//    public class WifiDirectBrodcastReciever extends BrodcastReciever{
-
-
 }

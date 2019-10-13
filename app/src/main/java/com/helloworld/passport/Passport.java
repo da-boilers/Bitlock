@@ -12,6 +12,8 @@ import java.security.KeyPairGenerator;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.SecureRandom;
+import java.security.Security;
+import java.security.*;
 import java.security.spec.ECGenParameterSpec;
 import java.util.ArrayList;
 import java.util.concurrent.TransferQueue;
@@ -21,15 +23,18 @@ public class Passport {
     public PublicKey publicKey;
     private PrivateKey privateKey;
     private ArrayList<Identity> VIDs;
+    public KeyPair keyPair;
+
 
     public Passport(ArrayList<Block> currentBlockChain) {
+        Security.insertProviderAt(new org.spongycastle.jce.provider.BouncyCastleProvider(), 1);
         VIDs = new ArrayList<Identity>();
         try {
             KeyPairGenerator keyGen = KeyPairGenerator.getInstance("ECDSA");
             SecureRandom random = SecureRandom.getInstance("SHA1PRNG");
             ECGenParameterSpec ecSpec = new ECGenParameterSpec("prime192v1");
             keyGen.initialize(ecSpec, random);
-            KeyPair keyPair = keyGen.generateKeyPair();
+            keyPair = keyGen.generateKeyPair();
             this.privateKey = keyPair.getPrivate();
             this.publicKey = keyPair.getPublic();
         }catch(Exception e) {

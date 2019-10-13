@@ -34,4 +34,7 @@ dependencies {
     androidTestImplementation 'androidx.test:runner:1.1.1'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.1.1'
     implementation files('C:/Users/harri/Downloads/bcprov-jdk15on-159.jar')
+    implementation 'com.google.firebase:firebase-firestore:21.1.1'
 }
+
+apply plugin: 'com.google.gms.google-services'

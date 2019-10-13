@@ -19,7 +19,6 @@ public class DataParser {
                     keyPair.substring(keyPair.indexOf(':') + 1)
             );
         }
-
         return parsedData;
     }
 
